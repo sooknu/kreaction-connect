@@ -30,6 +30,7 @@ require_once KREACTION_CONNECT_PATH . 'includes/class-cache.php';
 require_once KREACTION_CONNECT_PATH . 'includes/class-validator.php';
 require_once KREACTION_CONNECT_PATH . 'includes/class-audit-log.php';
 require_once KREACTION_CONNECT_PATH . 'includes/class-app-tracker.php';
+Kreaction_App_Tracker::init(); // Initialize app tracking hooks
 require_once KREACTION_CONNECT_PATH . 'includes/rest-api.php';
 require_once KREACTION_CONNECT_PATH . 'includes/acf-filters.php';
 
@@ -76,6 +77,12 @@ function kreaction_connect_deactivate() {
     // Clear all caches
     Kreaction_Cache::flush_all();
     flush_rewrite_rules();
+
+    // Clear scheduled cron events
+    $timestamp = wp_next_scheduled('kreaction_audit_cleanup');
+    if ($timestamp) {
+        wp_unschedule_event($timestamp, 'kreaction_audit_cleanup');
+    }
 }
 
 // Uninstall hook (cleanup)
@@ -84,20 +91,22 @@ register_uninstall_hook(__FILE__, 'kreaction_connect_uninstall');
 function kreaction_connect_uninstall() {
     global $wpdb;
 
-    // Remove audit log table
-    $table_name = $wpdb->prefix . 'kreaction_audit_log';
-    $wpdb->query("DROP TABLE IF EXISTS $table_name");
+    // Remove database tables
+    $wpdb->query("DROP TABLE IF EXISTS {$wpdb->prefix}kreaction_audit_log");
+    $wpdb->query("DROP TABLE IF EXISTS {$wpdb->prefix}kreaction_app_access");
 
-    // Remove app tracking table
-    $app_table = $wpdb->prefix . 'kreaction_app_access';
-    $wpdb->query("DROP TABLE IF EXISTS $app_table");
-
-    // Remove options
+    // Remove plugin options
     delete_option('kreaction_connect_settings');
 
-    // Clear transients
+    // Clear all transients
     $wpdb->query("DELETE FROM $wpdb->options WHERE option_name LIKE '_transient_kreaction_%'");
     $wpdb->query("DELETE FROM $wpdb->options WHERE option_name LIKE '_transient_timeout_kreaction_%'");
+
+    // Clear scheduled cron events
+    wp_clear_scheduled_hook('kreaction_audit_cleanup');
+
+    // Clear any object cache entries
+    wp_cache_flush();
 }
 
 /**

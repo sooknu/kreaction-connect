@@ -20,6 +20,29 @@ class Kreaction_App_Tracker {
     const TABLE_NAME = 'kreaction_app_access';
 
     /**
+     * Store current app password info (set during auth)
+     */
+    private static $current_app = null;
+
+    /**
+     * Initialize hooks
+     */
+    public static function init() {
+        // Hook into Application Password authentication to capture app info
+        add_action('application_password_did_authenticate', [__CLASS__, 'capture_app_info'], 10, 2);
+    }
+
+    /**
+     * Capture app info when authentication happens
+     *
+     * @param WP_User $user The authenticated user
+     * @param array $app The Application Password used
+     */
+    public static function capture_app_info($user, $app) {
+        self::$current_app = $app;
+    }
+
+    /**
      * Create the tracking table
      */
     public static function create_table() {
@@ -154,7 +177,12 @@ class Kreaction_App_Tracker {
      * @return array|null The Application Password data or null
      */
     private static function get_current_app_password($user_id) {
-        // WP_Application_Passwords is a class, not a function
+        // First check if we captured app info via the action hook
+        if (self::$current_app !== null) {
+            return self::$current_app;
+        }
+
+        // Fallback: try to get UUID from WP_Application_Passwords
         if (!class_exists('WP_Application_Passwords')) {
             return null;
         }
