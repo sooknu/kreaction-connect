@@ -1,0 +1,305 @@
+/**
+ * Kreaction Connect Admin Styles
+ *
+ * @package Kreaction_Connect
+ * @since 2.1.0
+ */
+
+/* Tab Navigation */
+.kreaction-tabs {
+    margin: 20px 0;
+    border-bottom: 1px solid #ccd0d4;
+}
+
+.kreaction-tabs .nav-tab {
+    margin-left: 0;
+    margin-right: 5px;
+}
+
+.kreaction-tabs .nav-tab-active {
+    background: #fff;
+    border-bottom-color: #fff;
+}
+
+/* Tab Content */
+.kreaction-tab-content {
+    display: none;
+    background: #fff;
+    padding: 20px;
+    border: 1px solid #ccd0d4;
+    border-top: none;
+}
+
+.kreaction-tab-content.active {
+    display: block;
+}
+
+/* Connected Apps Table */
+.kreaction-apps-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.kreaction-apps-table th,
+.kreaction-apps-table td {
+    text-align: left;
+    padding: 10px 12px;
+    border-bottom: 1px solid #e5e5e5;
+}
+
+.kreaction-apps-table th {
+    background: #f9f9f9;
+    font-weight: 600;
+}
+
+.kreaction-apps-table tr:hover td {
+    background: #f9f9f9;
+}
+
+.kreaction-apps-table .app-name {
+    font-weight: 500;
+}
+
+.kreaction-apps-table .app-user {
+    color: #666;
+}
+
+.kreaction-apps-table .app-stats {
+    color: #999;
+    font-size: 12px;
+}
+
+.kreaction-apps-table .revoke-btn {
+    color: #a00;
+    cursor: pointer;
+    text-decoration: none;
+}
+
+.kreaction-apps-table .revoke-btn:hover {
+    color: #dc3232;
+    text-decoration: underline;
+}
+
+.kreaction-apps-table .revoke-btn.disabled {
+    color: #999;
+    cursor: not-allowed;
+}
+
+/* Health Check */
+.kreaction-health-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 20px;
+    margin-top: 20px;
+}
+
+.kreaction-health-card {
+    background: #f9f9f9;
+    border: 1px solid #e5e5e5;
+    border-radius: 4px;
+    padding: 15px;
+}
+
+.kreaction-health-card h4 {
+    margin: 0 0 10px;
+    font-size: 14px;
+    color: #23282d;
+}
+
+.kreaction-health-card .status {
+    display: inline-block;
+    padding: 3px 8px;
+    border-radius: 3px;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.kreaction-health-card .status.ok {
+    background: #d4edda;
+    color: #155724;
+}
+
+.kreaction-health-card .status.error {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+.kreaction-health-card .status.warning {
+    background: #fff3cd;
+    color: #856404;
+}
+
+/* System Info Table */
+.kreaction-system-table {
+    width: 100%;
+    margin-top: 15px;
+}
+
+.kreaction-system-table th,
+.kreaction-system-table td {
+    padding: 8px 0;
+    border-bottom: 1px solid #e5e5e5;
+    font-size: 13px;
+}
+
+.kreaction-system-table th {
+    text-align: left;
+    width: 40%;
+    font-weight: 500;
+    color: #666;
+}
+
+.kreaction-system-table td {
+    font-family: monospace;
+}
+
+/* Actions */
+.kreaction-actions {
+    margin-top: 20px;
+    padding-top: 15px;
+    border-top: 1px solid #e5e5e5;
+}
+
+.kreaction-actions .button {
+    margin-right: 10px;
+}
+
+/* Empty State */
+.kreaction-empty-state {
+    text-align: center;
+    padding: 40px 20px;
+    color: #666;
+}
+
+.kreaction-empty-state .dashicons {
+    font-size: 48px;
+    width: 48px;
+    height: 48px;
+    color: #ccc;
+    margin-bottom: 15px;
+}
+
+.kreaction-empty-state p {
+    margin: 0;
+    font-size: 14px;
+}
+
+/* Loading Spinner */
+.kreaction-loading {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    border: 2px solid #f3f3f3;
+    border-top: 2px solid #0073aa;
+    border-radius: 50%;
+    animation: kreaction-spin 1s linear infinite;
+    vertical-align: middle;
+    margin-right: 8px;
+}
+
+@keyframes kreaction-spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Notices */
+.kreaction-notice {
+    padding: 10px 15px;
+    margin: 15px 0;
+    border-left: 4px solid;
+    background: #fff;
+}
+
+.kreaction-notice.success {
+    border-color: #46b450;
+    background: #ecf7ed;
+}
+
+.kreaction-notice.error {
+    border-color: #dc3232;
+    background: #fbeaea;
+}
+
+.kreaction-notice.warning {
+    border-color: #ffb900;
+    background: #fff8e5;
+}
+
+/* Header */
+.kreaction-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+}
+
+.kreaction-header h1 {
+    margin: 0;
+}
+
+.kreaction-header .version {
+    background: #0073aa;
+    color: #fff;
+    padding: 3px 8px;
+    border-radius: 3px;
+    font-size: 12px;
+}
+
+/* Role Permissions */
+.kreaction-roles-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 10px;
+}
+
+.kreaction-role-item {
+    display: flex;
+    align-items: center;
+    padding: 8px 12px;
+    background: #f9f9f9;
+    border: 1px solid #e5e5e5;
+    border-radius: 4px;
+}
+
+.kreaction-role-item input {
+    margin-right: 8px;
+}
+
+.kreaction-role-item.disabled {
+    background: #e9e9e9;
+}
+
+/* IP Address */
+.ip-address {
+    font-family: monospace;
+    font-size: 12px;
+    color: #666;
+}
+
+/* User Agent */
+.user-agent {
+    max-width: 200px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 12px;
+    color: #999;
+}
+
+/* Responsive */
+@media screen and (max-width: 782px) {
+    .kreaction-health-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .kreaction-apps-table {
+        font-size: 13px;
+    }
+
+    .kreaction-apps-table th:nth-child(4),
+    .kreaction-apps-table td:nth-child(4),
+    .kreaction-apps-table th:nth-child(5),
+    .kreaction-apps-table td:nth-child(5) {
+        display: none;
+    }
+}
