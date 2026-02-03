@@ -2085,9 +2085,9 @@ function kreaction_format_field_schema($field) {
         if (!empty($field['taxonomy'])) {
             $schema['taxonomy'] = is_array($field['taxonomy']) ? $field['taxonomy'] : [$field['taxonomy']];
         }
-        // Field appearance: checkbox, multi_select, radio, select
+        // Field appearance: checkbox, multi_select, radio, select (don't overwrite fieldType!)
         if (!empty($field['field_type'])) {
-            $schema['fieldType'] = $field['field_type'];
+            $schema['appearance'] = $field['field_type'];
         }
         // Return format: id, object
         if (!empty($field['return_format'])) {
