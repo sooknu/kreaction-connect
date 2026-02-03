@@ -492,9 +492,7 @@ function kreaction_get_hidden_types() {
 function kreaction_get_post_types_array() {
     // Post types to exclude
     $exclude = [
-        // Core WordPress types
-        'post', 'page',
-        // WordPress internals
+        // WordPress internals (NOT excluding post/page - they are now supported)
         'attachment', 'revision', 'nav_menu_item', 'custom_css',
         'customize_changeset', 'oembed_cache', 'user_request',
         'wp_block', 'wp_template', 'wp_template_part', 'wp_global_styles',
@@ -588,6 +586,19 @@ function kreaction_get_post_types_array() {
             }
         }
 
+        // Get taxonomies for this post type
+        $post_taxonomies = get_object_taxonomies($type->name, 'objects');
+        $tax_list = [];
+        foreach ($post_taxonomies as $tax_slug => $tax_obj) {
+            if ($tax_obj->public && $tax_obj->show_ui) {
+                $tax_list[] = [
+                    'slug' => $tax_slug,
+                    'name' => $tax_obj->labels->singular_name,
+                    'hierarchical' => $tax_obj->hierarchical,
+                ];
+            }
+        }
+
         $result[] = [
             'slug' => $type->name,
             'name' => $type->labels->name,
@@ -595,6 +606,7 @@ function kreaction_get_post_types_array() {
             'rest_base' => $type->rest_base ?: $type->name,
             'count' => $total,
             'hierarchical' => $type->hierarchical,
+            'taxonomies' => $tax_list,
         ];
     }
 
@@ -981,6 +993,25 @@ function kreaction_format_full_post($post, $selected_fields = null) {
     $modified = get_post_modified_time('c', true, $post);
     $date = get_the_date('c', $post);
 
+    // Get native WordPress taxonomies assigned to this post
+    $taxonomies_data = [];
+    $post_taxonomies = get_object_taxonomies($post->post_type, 'objects');
+    foreach ($post_taxonomies as $tax_slug => $tax_obj) {
+        if ($tax_obj->public && $tax_obj->show_ui) {
+            $terms = wp_get_object_terms($post->ID, $tax_slug);
+            if (!empty($terms) && !is_wp_error($terms)) {
+                $taxonomies_data[$tax_slug] = array_map(function($term) use ($tax_slug) {
+                    return [
+                        'id' => $term->term_id,
+                        'name' => $term->name,
+                        'slug' => $term->slug,
+                        'taxonomy' => $tax_slug,
+                    ];
+                }, $terms);
+            }
+        }
+    }
+
     return [
         'id' => $post->ID,
         'title' => get_the_title($post),
@@ -998,6 +1029,7 @@ function kreaction_format_full_post($post, $selected_fields = null) {
         'thumbnail' => $thumbnail,
         'fields' => $fields,
         'field_order' => $field_order,
+        'taxonomies' => empty($taxonomies_data) ? (object)[] : $taxonomies_data,
     ];
 }
 
@@ -1472,6 +1504,15 @@ function kreaction_update_post($id, $request) {
     if (isset($params['slug'])) {
         $post_data['post_name'] = sanitize_title($params['slug']);
     }
+    // Support scheduled publishing with date parameter
+    if (isset($params['date'])) {
+        $date = sanitize_text_field($params['date']);
+        $timestamp = strtotime($date);
+        if ($timestamp) {
+            $post_data['post_date'] = date('Y-m-d H:i:s', $timestamp);
+            $post_data['post_date_gmt'] = get_gmt_from_date(date('Y-m-d H:i:s', $timestamp));
+        }
+    }
 
     $result = wp_update_post($post_data, true);
     if (is_wp_error($result)) {
@@ -1491,6 +1532,18 @@ function kreaction_update_post($id, $request) {
     if (isset($params['fields']) && is_array($params['fields']) && function_exists('update_field')) {
         foreach ($params['fields'] as $key => $value) {
             update_field($key, $value, $id);
+        }
+    }
+
+    // Update native WordPress taxonomies
+    if (isset($params['taxonomies']) && is_array($params['taxonomies'])) {
+        foreach ($params['taxonomies'] as $taxonomy => $term_ids) {
+            if (taxonomy_exists($taxonomy)) {
+                // Sanitize term IDs
+                $clean_ids = array_map('intval', (array)$term_ids);
+                $clean_ids = array_filter($clean_ids, function($id) { return $id > 0; });
+                wp_set_object_terms($id, $clean_ids, $taxonomy);
+            }
         }
     }
 
@@ -1545,6 +1598,18 @@ function kreaction_create_post($request) {
     if (isset($params['excerpt'])) {
         $post_data['post_excerpt'] = sanitize_textarea_field($params['excerpt']);
     }
+    if (isset($params['slug'])) {
+        $post_data['post_name'] = sanitize_title($params['slug']);
+    }
+    // Support scheduled publishing with date parameter
+    if (isset($params['date'])) {
+        $date = sanitize_text_field($params['date']);
+        $timestamp = strtotime($date);
+        if ($timestamp) {
+            $post_data['post_date'] = date('Y-m-d H:i:s', $timestamp);
+            $post_data['post_date_gmt'] = get_gmt_from_date(date('Y-m-d H:i:s', $timestamp));
+        }
+    }
 
     $post_id = wp_insert_post($post_data, true);
     if (is_wp_error($post_id)) {
@@ -1558,6 +1623,17 @@ function kreaction_create_post($request) {
     if (isset($params['fields']) && is_array($params['fields']) && function_exists('update_field')) {
         foreach ($params['fields'] as $key => $value) {
             update_field($key, $value, $post_id);
+        }
+    }
+
+    // Set native WordPress taxonomies
+    if (isset($params['taxonomies']) && is_array($params['taxonomies'])) {
+        foreach ($params['taxonomies'] as $taxonomy => $term_ids) {
+            if (taxonomy_exists($taxonomy)) {
+                $clean_ids = array_map('intval', (array)$term_ids);
+                $clean_ids = array_filter($clean_ids, function($id) { return $id > 0; });
+                wp_set_object_terms($post_id, $clean_ids, $taxonomy);
+            }
         }
     }
 
