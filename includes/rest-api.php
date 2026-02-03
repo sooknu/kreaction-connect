@@ -2080,8 +2080,21 @@ function kreaction_format_field_schema($field) {
         $schema['relatedPostTypes'] = $related_types;
     }
 
-    if ($field['type'] === 'taxonomy' && !empty($field['taxonomy'])) {
-        $schema['taxonomy'] = is_array($field['taxonomy']) ? $field['taxonomy'] : [$field['taxonomy']];
+    if ($field['type'] === 'taxonomy') {
+        // Taxonomy slug(s)
+        if (!empty($field['taxonomy'])) {
+            $schema['taxonomy'] = is_array($field['taxonomy']) ? $field['taxonomy'] : [$field['taxonomy']];
+        }
+        // Field appearance: checkbox, multi_select, radio, select
+        if (!empty($field['field_type'])) {
+            $schema['fieldType'] = $field['field_type'];
+        }
+        // Return format: id, object
+        if (!empty($field['return_format'])) {
+            $schema['returnFormat'] = $field['return_format'];
+        }
+        // Allow multiple selection
+        $schema['allowMultiple'] = in_array($field['field_type'] ?? '', ['checkbox', 'multi_select']);
     }
 
     if (in_array($field['type'], ['repeater', 'group', 'flexible_content']) && !empty($field['sub_fields'])) {
