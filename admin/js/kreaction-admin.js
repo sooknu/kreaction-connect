@@ -201,6 +201,83 @@
         });
     }
 
+    // Save content visibility settings
+    function initContentVisibility() {
+        $('#kreaction-save-visibility').on('click', function(e) {
+            e.preventDefault();
+
+            var $btn = $(this);
+            var $spinner = $btn.siblings('.spinner');
+            var $status = $btn.siblings('.kreaction-save-status');
+
+            // Collect visibility data from checkboxes
+            var visibility = {};
+
+            $('.kreaction-visibility-matrix tbody tr').each(function() {
+                var postType = $(this).data('post-type');
+                var roles = [];
+
+                $(this).find('.visibility-checkbox:checked').each(function() {
+                    var role = $(this).data('role');
+                    if (role !== 'administrator') { // Admin always has access, don't need to store
+                        roles.push(role);
+                    }
+                });
+
+                // Store the roles that have access (excluding admin which always has access)
+                if (roles.length > 0) {
+                    // Add administrator back since they always have access
+                    roles.unshift('administrator');
+                    visibility[postType] = roles;
+                }
+                // If no roles selected (only admin), don't store - means only admin can access
+                else {
+                    // Check if any non-admin checkbox exists and is unchecked
+                    var hasNonAdminCheckboxes = $(this).find('.visibility-checkbox:not(:disabled)').length > 0;
+                    if (hasNonAdminCheckboxes) {
+                        visibility[postType] = ['administrator'];
+                    }
+                }
+            });
+
+            $btn.prop('disabled', true);
+            $spinner.addClass('is-active');
+            $status.text('').removeClass('success error');
+
+            $.ajax({
+                url: kreactionAdmin.ajaxUrl,
+                type: 'POST',
+                data: {
+                    action: 'kreaction_save_content_visibility',
+                    nonce: kreactionAdmin.nonce,
+                    visibility: visibility
+                },
+                success: function(response) {
+                    $btn.prop('disabled', false);
+                    $spinner.removeClass('is-active');
+
+                    if (response.success) {
+                        $status.text('Saved!').addClass('success');
+                        showNotice('success', response.data.message);
+                    } else {
+                        $status.text('Error').addClass('error');
+                        showNotice('error', response.data.message || kreactionAdmin.strings.error);
+                    }
+
+                    setTimeout(function() {
+                        $status.text('').removeClass('success error');
+                    }, 3000);
+                },
+                error: function() {
+                    $btn.prop('disabled', false);
+                    $spinner.removeClass('is-active');
+                    $status.text('Error').addClass('error');
+                    showNotice('error', kreactionAdmin.strings.error);
+                }
+            });
+        });
+    }
+
     // Show admin notice
     function showNotice(type, message) {
         var $notice = $('<div class="kreaction-notice ' + type + '">' + escapeHtml(message) + '</div>');
@@ -227,6 +304,7 @@
         initRevokeApp();
         initHealthCheck();
         initClearCache();
+        initContentVisibility();
     });
 
 })(jQuery);

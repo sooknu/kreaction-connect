@@ -286,6 +286,110 @@
     color: #999;
 }
 
+/* Content Visibility Matrix */
+.kreaction-content-visibility h2 {
+    margin-top: 0;
+}
+
+.kreaction-visibility-matrix {
+    margin: 20px 0;
+    overflow-x: auto;
+}
+
+.kreaction-visibility-matrix table {
+    min-width: 100%;
+}
+
+.kreaction-visibility-matrix .column-content-type {
+    min-width: 180px;
+}
+
+.kreaction-visibility-matrix .column-content-type code {
+    display: block;
+    margin-top: 4px;
+    font-size: 11px;
+    color: #666;
+}
+
+.kreaction-visibility-matrix .column-role {
+    text-align: center;
+    min-width: 100px;
+}
+
+.kreaction-visibility-matrix thead th {
+    background: #f1f1f1;
+    font-weight: 600;
+}
+
+.kreaction-visibility-matrix thead .column-role .dashicons {
+    color: #999;
+    font-size: 14px;
+    vertical-align: middle;
+    margin-left: 4px;
+}
+
+.kreaction-visibility-matrix tbody .column-role {
+    padding: 12px 8px;
+}
+
+.kreaction-visibility-matrix .visibility-checkbox {
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+}
+
+.kreaction-visibility-matrix .visibility-checkbox:disabled {
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+
+.kreaction-visibility-actions {
+    margin-top: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.kreaction-visibility-actions .spinner {
+    float: none;
+    margin: 0;
+}
+
+.kreaction-save-status {
+    font-weight: 500;
+    transition: opacity 0.3s;
+}
+
+.kreaction-save-status.success {
+    color: #46b450;
+}
+
+.kreaction-save-status.error {
+    color: #dc3232;
+}
+
+.kreaction-visibility-note {
+    margin-top: 25px;
+    padding: 15px;
+    background: #f9f9f9;
+    border: 1px solid #e5e5e5;
+    border-radius: 4px;
+}
+
+.kreaction-visibility-note p {
+    margin: 0 0 8px;
+}
+
+.kreaction-visibility-note ul {
+    margin: 0;
+    padding-left: 20px;
+}
+
+.kreaction-visibility-note li {
+    margin: 4px 0;
+    color: #666;
+}
+
 /* Responsive */
 @media screen and (max-width: 782px) {
     .kreaction-health-grid {
@@ -301,5 +405,17 @@
     .kreaction-apps-table th:nth-child(5),
     .kreaction-apps-table td:nth-child(5) {
         display: none;
+    }
+
+    .kreaction-visibility-matrix {
+        font-size: 13px;
+    }
+
+    .kreaction-visibility-matrix .column-content-type {
+        min-width: 120px;
+    }
+
+    .kreaction-visibility-matrix .column-role {
+        min-width: 70px;
     }
 }

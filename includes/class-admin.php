@@ -51,6 +51,7 @@ class Kreaction_Admin {
         add_action('wp_ajax_kreaction_revoke_app', [$this, 'ajax_revoke_app']);
         add_action('wp_ajax_kreaction_test_health', [$this, 'ajax_test_health']);
         add_action('wp_ajax_kreaction_clear_cache', [$this, 'ajax_clear_cache']);
+        add_action('wp_ajax_kreaction_save_content_visibility', [$this, 'ajax_save_content_visibility']);
     }
 
     /**
@@ -485,6 +486,55 @@ class Kreaction_Admin {
     }
 
     /**
+     * AJAX: Save content visibility settings
+     */
+    public function ajax_save_content_visibility() {
+        check_ajax_referer('kreaction_admin_nonce', 'nonce');
+
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(['message' => __('Permission denied.', 'kreaction-connect')]);
+        }
+
+        $visibility = [];
+        $data = isset($_POST['visibility']) ? $_POST['visibility'] : [];
+
+        // Get valid roles for validation
+        $valid_roles = array_keys(wp_roles()->roles);
+
+        if (is_array($data)) {
+            foreach ($data as $post_type => $roles) {
+                $post_type = sanitize_key($post_type);
+                if (empty($post_type)) continue;
+
+                $sanitized_roles = [];
+                if (is_array($roles)) {
+                    foreach ($roles as $role) {
+                        $role = sanitize_key($role);
+                        if (in_array($role, $valid_roles, true)) {
+                            $sanitized_roles[] = $role;
+                        }
+                    }
+                }
+
+                // Only store if there are restrictions (not all roles selected)
+                // This keeps backward compatibility - unconfigured types are visible to all
+                if (!empty($sanitized_roles)) {
+                    $visibility[$post_type] = $sanitized_roles;
+                }
+            }
+        }
+
+        self::save_content_visibility($visibility);
+
+        // Clear cache since content visibility changed
+        if (class_exists('Kreaction_Cache')) {
+            Kreaction_Cache::flush_all();
+        }
+
+        wp_send_json_success(['message' => __('Content visibility settings saved.', 'kreaction-connect')]);
+    }
+
+    /**
      * Check if a user's role is allowed to access the API
      */
     public static function is_user_role_allowed($user = null) {
@@ -520,5 +570,58 @@ class Kreaction_Admin {
         $required_cap = $settings['require_capability'] ?? 'edit_posts';
 
         return user_can($user, $required_cap);
+    }
+
+    /**
+     * Check if a user can access a specific post type
+     *
+     * @param WP_User|null $user The user to check (defaults to current user)
+     * @param string $post_type_slug The post type slug
+     * @return bool Whether the user can access the post type
+     */
+    public static function can_user_access_post_type($user = null, $post_type_slug = '') {
+        if (!$user) {
+            $user = wp_get_current_user();
+        }
+
+        if (!$user || !$user->exists()) {
+            return false;
+        }
+
+        // Administrators always have full access
+        if (in_array('administrator', (array) $user->roles, true)) {
+            return true;
+        }
+
+        $visibility = get_option('kreaction_content_visibility', []);
+
+        // If not configured for this post type, allow access (backward compatible)
+        if (empty($visibility) || !isset($visibility[$post_type_slug])) {
+            return true;
+        }
+
+        $allowed_roles = $visibility[$post_type_slug];
+
+        // Check if user has any of the allowed roles
+        return (bool) array_intersect((array) $user->roles, (array) $allowed_roles);
+    }
+
+    /**
+     * Get content visibility settings
+     *
+     * @return array Associative array of post_type => allowed_roles
+     */
+    public static function get_content_visibility() {
+        return get_option('kreaction_content_visibility', []);
+    }
+
+    /**
+     * Save content visibility settings
+     *
+     * @param array $visibility Associative array of post_type => allowed_roles
+     * @return bool Whether the option was updated
+     */
+    public static function save_content_visibility($visibility) {
+        return update_option('kreaction_content_visibility', $visibility);
     }
 }

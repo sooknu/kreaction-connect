@@ -160,6 +160,18 @@ Control which ACF fields appear in the API:
 1. Add `hide-in-app` to the field's Wrapper Attributes > Class
 2. Or add `[hide_in_app]` in the field's Instructions
 
+## Role-Based Content Visibility
+
+Control which content types each user role can see in the app. Configure this in **Settings > Kreaction Connect > Content Visibility**.
+
+Features:
+- Matrix UI showing content types vs user roles
+- Checkboxes to enable/disable access per role
+- Administrator role always has full access (cannot be restricted)
+- Unconfigured content types are visible to all allowed roles by default
+
+This is useful when handing off the app to customers - configure their role to only see relevant content types without requiring them to manually hide types in the app.
+
 ## Filters
 
 ```php
@@ -171,6 +183,13 @@ add_filter('kreaction_excluded_post_types', function($excluded) {
 ```
 
 ## Changelog
+
+### 1.2.0
+- Added role-based content visibility settings
+- New "Content Visibility" tab in admin settings
+- Configure which content types each user role can access
+- Administrator role always has full access
+- Unconfigured types visible to all allowed roles (backward compatible)
 
 ### 1.1.0
 - Added native WordPress taxonomy support (Categories, Tags, custom taxonomies)

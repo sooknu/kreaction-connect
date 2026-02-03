@@ -412,40 +412,49 @@ function kreaction_get_current_user() {
  * GET /dashboard - Return dashboard summary
  */
 function kreaction_get_dashboard() {
-    return Kreaction_Cache::remember('dashboard', function() {
-        $types = kreaction_get_post_types_array();
+    // Get filtered post types (includes role-based visibility filtering)
+    $types = kreaction_get_post_types_array();
 
-        $total = 0;
-        foreach ($types as $type) {
-            $total += $type['count'];
-        }
+    $total = 0;
+    foreach ($types as $type) {
+        $total += $type['count'];
+    }
 
-        $type_slugs = array_column($types, 'slug');
-        $recent_posts = get_posts([
-            'post_type' => $type_slugs,
-            'posts_per_page' => 10,
-            'orderby' => 'modified',
-            'order' => 'DESC',
-            'post_status' => ['publish', 'draft', 'pending', 'private'],
-        ]);
+    $type_slugs = array_column($types, 'slug');
 
-        $recent = array_map(function($post) {
-            $modified = get_post_modified_time('c', true, $post);
-            return [
-                'id' => $post->ID,
-                'title' => get_the_title($post),
-                'type' => $post->post_type,
-                'status' => $post->post_status,
-                'modified' => $modified ?: get_the_date('c', $post), // Fall back to date if no modified time
-            ];
-        }, $recent_posts);
-
+    // If no types available for this user, return empty dashboard
+    if (empty($type_slugs)) {
         return [
-            'types' => $types,
-            'total_posts' => $total,
-            'recent' => $recent,
+            'types' => [],
+            'total_posts' => 0,
+            'recent' => [],
         ];
-    });
+    }
+
+    $recent_posts = get_posts([
+        'post_type' => $type_slugs,
+        'posts_per_page' => 10,
+        'orderby' => 'modified',
+        'order' => 'DESC',
+        'post_status' => ['publish', 'draft', 'pending', 'private'],
+    ]);
+
+    $recent = array_map(function($post) {
+        $modified = get_post_modified_time('c', true, $post);
+        return [
+            'id' => $post->ID,
+            'title' => get_the_title($post),
+            'type' => $post->post_type,
+            'status' => $post->post_status,
+            'modified' => $modified ?: get_the_date('c', $post), // Fall back to date if no modified time
+        ];
+    }, $recent_posts);
+
+    return [
+        'types' => $types,
+        'total_posts' => $total,
+        'recent' => $recent,
+    ];
 }
 
 /**
@@ -610,6 +619,15 @@ function kreaction_get_post_types_array() {
         ];
     }
 
+    // Apply role-based content visibility filtering
+    if (class_exists('Kreaction_Admin')) {
+        $user = wp_get_current_user();
+        $result = array_filter($result, function($post_type) use ($user) {
+            return Kreaction_Admin::can_user_access_post_type($user, $post_type['slug']);
+        });
+        $result = array_values($result); // Re-index array
+    }
+
     usort($result, function($a, $b) {
         return strcasecmp($a['name'], $b['name']);
     });
@@ -687,6 +705,11 @@ function kreaction_get_posts($request) {
     $post_type = kreaction_resolve_post_type($type);
     if (!$post_type) {
         return kreaction_error('invalid_type', 'Invalid post type', 400);
+    }
+
+    // Check role-based content visibility
+    if (class_exists('Kreaction_Admin') && !Kreaction_Admin::can_user_access_post_type(null, $post_type)) {
+        return kreaction_error('forbidden', 'You do not have permission to access this content type', 403);
     }
 
     $args = [
@@ -851,6 +874,11 @@ function kreaction_handle_post($request) {
 
     if (!$post) {
         return kreaction_error('not_found', 'Post not found', 404);
+    }
+
+    // Check role-based content visibility
+    if (class_exists('Kreaction_Admin') && !Kreaction_Admin::can_user_access_post_type(null, $post->post_type)) {
+        return kreaction_error('forbidden', 'You do not have permission to access this content type', 403);
     }
 
     // For POST (update), require edit_post capability
@@ -1570,6 +1598,11 @@ function kreaction_create_post($request) {
         return kreaction_error('invalid_type', 'Invalid post type', 400);
     }
 
+    // Check role-based content visibility
+    if (class_exists('Kreaction_Admin') && !Kreaction_Admin::can_user_access_post_type(null, $post_type)) {
+        return kreaction_error('forbidden', 'You do not have permission to access this content type', 403);
+    }
+
     $type_obj = get_post_type_object($post_type);
     if (!current_user_can($type_obj->cap->create_posts)) {
         return kreaction_error('forbidden', 'Cannot create posts of this type', 403);
@@ -1653,6 +1686,11 @@ function kreaction_delete_post($request) {
     $post = get_post($id);
     if (!$post) {
         return kreaction_error('not_found', 'Post not found', 404);
+    }
+
+    // Check role-based content visibility
+    if (class_exists('Kreaction_Admin') && !Kreaction_Admin::can_user_access_post_type(null, $post->post_type)) {
+        return kreaction_error('forbidden', 'You do not have permission to access this content type', 403);
     }
 
     if (!current_user_can('delete_post', $id)) {
