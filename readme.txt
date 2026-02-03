@@ -1,6 +1,6 @@
 === Kreaction Connect ===
 Contributors: kreaction
-Donate link: https://kreaction.com
+Donate link: https://kreaction.co
 Tags: acf, rest-api, headless, api, custom-fields
 Requires at least: 6.0
 Tested up to: 6.7
